@@ -36,8 +36,19 @@ profile.onError((err, c) => {
 
 profile.get("/me", async (c) => {
   const userAddress = c.req.query("eth_address");
-  const NAME = "John";
-  const EMAIL = "John@example.com";
+  if (
+    !userAddress ||
+    typeof userAddress !== "string" ||
+    userAddress.trim() === ""
+  ) {
+    return c.json(
+      {
+        status: "failed",
+        reason: "eth_address is required",
+      },
+      400
+    );
+  }
 
   const { data, error } = await supabase
     .from("wallets")
