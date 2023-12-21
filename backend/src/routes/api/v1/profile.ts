@@ -5,6 +5,7 @@ import { getUserProfile } from "../../../queries";
 import { weiToNumber } from "../../../utils/formatting";
 import validator from "validator";
 import { createClient } from "@supabase/supabase-js";
+const jwtMiddleware = require("../../../middleware/jwtMiddleware");
 import dayjs from "dayjs";
 
 const supabaseUrl = Bun.env.SUPABASE_PROJECT_URL;
@@ -35,7 +36,7 @@ profile.onError((err, c) => {
   return c.json({ status: "Failed", message: err.message }, 500);
 });
 
-profile.get("/me", async (c) => {
+profile.get("/me", jwtMiddleware, async (c) => {
   const userAddress = c.req.query("eth_address");
   if (
     !userAddress ||
@@ -104,7 +105,7 @@ profile.get("/me", async (c) => {
   });
 });
 
-profile.post("/me", async (c) => {
+profile.post("/me", jwtMiddleware, async (c) => {
   try {
     const body = await c.req.json();
     const { eth_address, nickname, email_address } = body;
