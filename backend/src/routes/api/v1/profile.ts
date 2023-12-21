@@ -5,6 +5,7 @@ import { getUserProfile } from "../../../queries";
 import { weiToNumber } from "../../../utils/formatting";
 import validator from "validator";
 import { createClient } from "@supabase/supabase-js";
+import dayjs from "dayjs";
 
 const supabaseUrl = Bun.env.SUPABASE_PROJECT_URL;
 if (!supabaseUrl) {
@@ -152,39 +153,53 @@ profile.post("/me", async (c) => {
     }
 
     // Perform the upsert operation
-    /*
-    const user = await prisma.user.upsert({
-      where: { eth_address },
-      update: {
-        nickname,
-        discord_user_id,
-        discord_user_name,
-        ...(sanitisedEmail && { email_address: sanitisedEmail })
-      },
-      create: {
-        eth_address,
-        nickname,
-        discord_user_id,
-        discord_user_name,
-        ...(sanitisedEmail && { email_address: sanitisedEmail }) // Add email_address only if sanitisedEmail is valid
-      }
-    });
-    */
+    // Check if a wallet entry exists
+    let { data: walletData, error: walletError } = await supabase
+      .from("wallets")
+      .select("profile_id")
+      .eq("eth_address", eth_address)
+      .single();
 
-    // Convert BigInt fields to String for JSON serialization
-    /*
-    const userForResponse = {
-      ...user,
-      discord_user_id: user.discord_user_id
-        ? user.discord_user_id.toString()
-        : null
-    };
-    return c.json(
-      { status: "success", user: userForResponse },
-      200
-    );
-    return res.json({ status: "success", user: userForResponse });
-    */
+    if (walletError || !walletData) {
+      // Create a new profile and wallet entry
+      let { data: newProfile, error: newProfileError } = await supabase
+        .from("profiles")
+        .insert([{ nickname, email_address: sanitisedEmail }])
+        .select();
+
+      console.log("New Profile: ", newProfile);
+
+      if (newProfileError || !newProfile || newProfile.length === 0) {
+        return c.json(
+          { status: "failed", reason: newProfileError.message },
+          500
+        );
+      }
+
+      let profileId = newProfile[0].id;
+
+      let { error: newWalletError } = await supabase
+        .from("wallets")
+        .insert([{ eth_address, profile_id: profileId }])
+        .single();
+
+      if (newWalletError) {
+        return c.json(
+          { status: "failed", reason: newWalletError.message },
+          500
+        );
+      }
+    } else {
+      // Wallet entry exists, update the profile
+      let { error: profileError } = await supabase
+        .from("profiles")
+        .update({ nickname, email_address: sanitisedEmail })
+        .eq("id", walletData.profile_id);
+
+      if (profileError) {
+        return c.json({ status: "failed", reason: profileError.message }, 500);
+      }
+    }
 
     return c.json(
       { status: "success", user: { eth_address, nickname, email_address } },
