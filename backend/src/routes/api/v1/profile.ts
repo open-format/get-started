@@ -4,6 +4,17 @@ import { GetUserProfileResponse } from "../../../../@types";
 import { getUserProfile } from "../../../queries";
 import { weiToNumber } from "../../../utils/formatting";
 import validator from "validator";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = Bun.env.SUPABASE_PROJECT_URL;
+if (!supabaseUrl) {
+  throw new Error("SUPABASE_PROJECT_URL is not set");
+}
+const supabaseAnonKey = Bun.env.SUPABASE_ANON_KEY;
+if (!supabaseAnonKey) {
+  throw new Error("SUPABASE_ANON_KEY is not set");
+}
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 enum Status {
   SUCCESS = "success",
@@ -24,14 +35,38 @@ profile.onError((err, c) => {
 });
 
 profile.get("/me", async (c) => {
-  const USER = "0x03755352654D73DA06756077Dd7f040ADcE3Fd58";
+  const userAddress = c.req.query("eth_address");
   const NAME = "John";
   const EMAIL = "John@example.com";
+
+  const { data, error } = await supabase
+    .from("wallets")
+    .select(
+      `
+      eth_address,
+      profile_id (
+        id,
+        auth_user_id,
+        nickname,
+        email_address,
+        user_type
+      )
+    `
+    )
+    .eq("eth_address", userAddress)
+    .single();
+
+  if (error) {
+    console.log(error);
+    return c.json({ error: "Error processing the request" }, 500);
+  }
+
+  console.log("User data from DB: ", data);
 
   const response = await sdk.subgraph.rawRequest<GetUserProfileResponse>(
     getUserProfile,
     {
-      user: USER.toLowerCase(),
+      user: userAddress.toLowerCase(),
       app: sdk.appId.toLowerCase(),
       xp: (process.env.XP_TOKEN_ID as string).toLowerCase(),
       rewardToken: (process.env.REWARD_TOKEN_ID as string).toLowerCase(),
@@ -47,10 +82,9 @@ profile.get("/me", async (c) => {
 
   return c.json({
     status: Status.SUCCESS,
-    name: NAME,
-    email: EMAIL,
-    eth_address: USER,
-
+    name: data.profile_id.nickname,
+    email: data.profile_id.email_address,
+    eth_address: userAddress,
     xp_balance: weiToNumber(XPBalance?.balance),
     reward_token_balance: weiToNumber(RewardTokenBalance?.balance),
     completed_missions: response.missions,
