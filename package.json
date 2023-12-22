@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "workspaces": [
-    "app",
+    "app-new",
     "backend"
   ],
   "devDependencies": {
@@ -14,11 +14,20 @@
   },
   "dependencies": {
     "@openformat/react": "dev",
+    "@supabase/supabase-js": "^2.39.0",
+    "crypto": "^1.0.1",
     "dayjs": "^1.11.10",
     "ethers": "^5",
     "graphql-request": "^6.1.0",
-    "turbo": "^1.11.1"
+    "jsonwebtoken": "^9.0.2",
+    "node-cache": "^5.1.2",
+    "react-router-dom": "^6.21.0",
+    "turbo": "^1.11.1",
+    "validator": "^13.11.0"
   },
+  "trustedDependencies": [
+    "supabase"
+  ],
   "scripts": {
     "dev": "turbo run dev --parallel"
   }

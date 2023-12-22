@@ -1,8 +1,8 @@
 import { useRawRequest } from "@openformat/react";
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
 import * as React from "react";
-import { leaderboardData } from "~queries/leaderboard";
-import { convertToTimestamps, generateLeaderboard } from "~utils/leaderboard";
+import { leaderboardData } from "../queries/leaderboard";
+import { convertToTimestamps, generateLeaderboard } from "../utils/leaderboard";
 
 export default () => {
   // State to store the leaderboard data
@@ -10,10 +10,10 @@ export default () => {
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   // Calculate the start and end of the current week
-  //const startOfWeek = dayjs().startOf("week");
-  const startOfWeek = dayjs("2023-12-04");
-  const endOfWeek = dayjs("2023-12-04 19:20");
-  //const endOfWeek = startOfWeek.endOf("week");
+  const startOfWeek = dayjs().startOf("week");
+  const endOfWeek = startOfWeek.endOf("week");
+  //const startOfWeek = dayjs("2023-12-04");
+  //const endOfWeek = dayjs("2023-12-04 19:20");
 
   // Convert start and end dates of the week to timestamps
   const { startTimestamp, endTimestamp } = convertToTimestamps(
@@ -25,7 +25,7 @@ export default () => {
   useRawRequest<{ actions: Action[]; missions: Mission[] }, any>({
     query: leaderboardData,
     variables: {
-      appId: process.env.APP_ID, // Application ID from environment variables
+      appId: process.env.NEXT_PUBLIC_APP_ID, // Application ID from environment variables
       start: startTimestamp, // Start timestamp of the week
       end: endTimestamp, // End timestamp of the week
     },

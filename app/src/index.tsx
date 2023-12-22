@@ -4,9 +4,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 
 createRoot(document.getElementById("root")!).render(
-  <OpenFormatProvider
-    config={{ networks: [Chains.foundry, Chains.polygonMumbai] }}
-  >
+  <OpenFormatProvider config={{ networks: [Chains.polygonMumbai] }}>
     <App />
   </OpenFormatProvider>
 );
