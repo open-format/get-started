@@ -1,6 +1,8 @@
 import { Chains, OpenFormatSDK } from "@openformat/sdk";
 import { PrismaClient } from "@prisma/client";
 import { Hono } from "hono";
+import { getCookie } from "hono/cookie";
+import { decode } from "hono/jwt";
 import validator from "validator";
 import { GetUserProfileResponse } from "../../../../@types";
 import { getUserProfile } from "../../../queries";
@@ -26,10 +28,19 @@ profile.onError((err, c) => {
 });
 
 profile.get("/me", async (c) => {
-  const { sub } = c.get("jwtPayload");
+  const cookie = getCookie(c, "accessToken");
+
+  if (!cookie) {
+    return c.json(
+      { status: Status.FAIL, message: "Unauthorized" },
+      401
+    );
+  }
+
+  const { payload } = decode(cookie);
 
   const user = await prisma.user.findFirstOrThrow({
-    where: { eth_address: sub },
+    where: { eth_address: payload.sub },
   });
 
   const USER = user.eth_address;

@@ -1,14 +1,17 @@
 import { ProfileData } from "@/@types";
 import { useProfileStore } from "@/stores";
 import apiClient from "@/utils/apiClient";
+import { useWallet } from "@openformat/react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Profile() {
   const { setProfileData } = useProfileStore();
+  const { address } = useWallet();
 
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["profileData"],
     queryFn: fetchProfileData,
+    enabled: Boolean(address),
   });
 
   async function fetchProfileData(): Promise<ProfileData> {
