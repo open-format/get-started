@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/utils/apiClient";
 import {
   ConnectButton,
@@ -10,6 +11,7 @@ import { useEffect } from "react";
 
 export default function Header() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const { address } = useWallet();
   const { sdk } = useOpenFormat();
 
@@ -27,23 +29,17 @@ export default function Header() {
         challengeResponse.data.challenge
       );
 
-      const verifyResponse = await apiClient.post("auth/verify", {
+      await apiClient.post("auth/verify", {
         eth_address: address,
         signature: signedMessage,
       });
-      localStorage.setItem(
-        "tokens",
-        JSON.stringify(verifyResponse.data)
-      );
     } catch (error) {
       console.error("Authentication error:", error);
     }
   };
 
   useEffect(() => {
-    const tokenExists = localStorage.getItem("tokens");
-
-    if (address && !tokenExists) {
+    if (address && !isAuthenticated) {
       handleAuth();
     }
   }, [address]);

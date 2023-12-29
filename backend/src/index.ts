@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { jwt } from "hono/jwt";
+import { checkCookieMiddleware } from "./middlewares/cookie";
 import actions from "./routes/api/v1/actions";
 import auth from "./routes/api/v1/auth";
 import leaderboard from "./routes/api/v1/leaderboard";
@@ -22,16 +22,16 @@ app.use(
   "/profile/*",
   cors({
     origin: ["http://localhost:3000"],
+    credentials: true,
   }),
-  jwt({
-    secret: process.env.JWT_SECRET as string,
-  })
+  checkCookieMiddleware
 );
 
 app.use(
   "*",
   cors({
     origin: ["http://localhost:3000"],
+    credentials: true,
   })
 );
 

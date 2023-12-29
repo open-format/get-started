@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import dayjs from "dayjs";
 import { ethers } from "ethers";
 import { Hono } from "hono";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { sign } from "hono/jwt";
 
 const prisma = new PrismaClient();
@@ -25,8 +27,8 @@ auth.post("/challenge", async (c) => {
 });
 
 auth.post("/verify", async (c) => {
-  const ACCESS_EXPIRES_IN = Math.floor(Date.now() / 1000) + 60; // Current time in seconds + 28 days
-  const REFRESH_EXPIRES_IN = Math.floor(Date.now() / 1000) + 60 * 60; // Current time in seconds + 28 days
+  const ACCESS_EXPIRES_IN = dayjs().add(10, "second").toDate();
+  const REFRESH_EXPIRES_IN = dayjs().add(1, "month").toDate();
   const { eth_address, signature } = await c.req.json();
 
   const result = await prisma.challenge.findFirstOrThrow({
@@ -35,9 +37,6 @@ auth.post("/verify", async (c) => {
       created_at: "desc",
     },
   });
-
-  console.log({ result });
-
   const originalChallenge = result ? result.challenge : null;
 
   if (!originalChallenge) {
@@ -84,6 +83,22 @@ auth.post("/verify", async (c) => {
           },
         });
 
+        // Set the access and refresh tokens as cookies
+        setCookie(c, "accessToken", accessToken, {
+          path: "/",
+          httpOnly: true,
+          expires: ACCESS_EXPIRES_IN, // convert to milliseconds
+          secure: false, // if you're using https, set this to true
+          sameSite: "Strict", // this can be lax or strict depending on your needs
+        });
+        setCookie(c, "refreshToken", refreshToken, {
+          path: "/",
+          httpOnly: true,
+          expires: REFRESH_EXPIRES_IN, // convert to milliseconds
+          secure: false, // if you're using https, set this to true
+          sameSite: "Strict", // this can be lax or strict depending on your needs
+        });
+
         return c.json({
           status: Status.SUCCESS,
           access_token: accessToken,
@@ -111,12 +126,20 @@ auth.post("/verify", async (c) => {
 });
 
 auth.post("/refresh-token", async (c) => {
-  const ACCESS_EXPIRES_IN = Math.floor(Date.now() / 1000) + 60; // Current time in seconds + 28 days
+  const ACCESS_EXPIRES_IN = dayjs().add(10, "second").toDate();
 
-  const { refresh_token } = await c.req.json();
+  // Get the refresh token from the cookie
+  const refreshToken = getCookie(c, "refreshToken");
+
+  if (!refreshToken) {
+    return c.json(
+      { status: Status.FAILED, message: "No refresh token provided" },
+      401
+    );
+  }
 
   const tokenRecord = await prisma.token.findFirst({
-    where: { refresh_token },
+    where: { refresh_token: refreshToken },
     include: { user: true }, // Include the user relation here
   });
 
@@ -140,10 +163,38 @@ auth.post("/refresh-token", async (c) => {
     data: { access_token: newAccessToken },
   });
 
+  // Set the new access token as a cookie
+  setCookie(c, "accessToken", newAccessToken, {
+    httpOnly: true,
+    expires: ACCESS_EXPIRES_IN, // convert to milliseconds
+    secure: false, // if you're using https, set this to true
+    sameSite: "Strict", // this can be lax or strict depending on your needs
+  });
+
   return c.json({
     status: Status.SUCCESS,
-    refresh_token,
-    access_token: newAccessToken,
+    message: "Token refreshed",
+  });
+});
+
+auth.post("/logout", async (c) => {
+  // Clear the access token cookie
+  deleteCookie(c, "accessToken", {
+    path: "/", // Specify the path to match the original cookie
+    secure: false, // Match the same security setting as when setting the cookie
+    sameSite: "Strict", // Match the same sameSite setting as when setting the cookie
+  });
+
+  // Clear the refresh token cookie
+  deleteCookie(c, "refreshToken", {
+    path: "/", // Specify the path to match the original cookie
+    secure: false, // Match the same security setting as when setting the cookie
+    sameSite: "Strict", // Match the same sameSite setting as when setting the cookie
+  });
+
+  return c.json({
+    status: "success",
+    message: "Logged out successfully",
   });
 });
 
