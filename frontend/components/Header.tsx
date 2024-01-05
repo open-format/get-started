@@ -18,6 +18,7 @@ export default function Header() {
   };
 
   const handleAuth = async () => {
+    if (!address) return;
     try {
       const challengeResponse = await apiClient.post(
         "auth/challenge",
