@@ -18,7 +18,7 @@ export default function Quests({
     );
 
   return (
-    <section id="achievements">
+    <section id="achievements" className="main">
       <h2>{title}</h2>
       <ul className="quests__list">
         {quests && quests.length ? (

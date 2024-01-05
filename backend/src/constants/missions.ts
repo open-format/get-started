@@ -1,8 +1,8 @@
 export default [
   {
-    id: "test_mission",
+    id: "Reward User",
     description:
-      "Complete two test actions to complete the Test Mission",
+      "Press Reward User on the App page twice to complete this Quest.",
     tokens: [
       {
         address: process.env.XP_TOKEN_ID,

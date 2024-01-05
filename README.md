@@ -43,7 +43,7 @@ cd get-started
 make setup
 ```
 
-4. Add environment variables to `./backend/.env`
+4. Add environment variables to `./backend/.env` and `./frontend/.env.local`
 
 5. Execute development commands:
 

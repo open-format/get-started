@@ -18,6 +18,7 @@ export default function Header() {
   };
 
   const handleAuth = async () => {
+    if (!address) return;
     try {
       const challengeResponse = await apiClient.post(
         "auth/challenge",
@@ -41,9 +42,10 @@ export default function Header() {
   };
 
   useEffect(() => {
-    const tokenExists = localStorage.getItem("tokens");
+    const tokens = localStorage.getItem("tokens");
+    const parsedTokens = JSON.parse(tokens);
 
-    if (address && !tokenExists) {
+    if ((address && !tokens) || address !== parsedTokens?.address) {
       handleAuth();
     }
   }, [address]);
@@ -63,7 +65,7 @@ export default function Header() {
       </div>
       <nav>
         <a href="/" className={isActive("/")}>
-          Play
+          App
         </a>
         <a href="/profile" className={isActive("/profile")}>
           Profile
