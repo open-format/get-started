@@ -36,8 +36,6 @@ auth.post("/verify", async (c) => {
     },
   });
 
-  console.log({ result });
-
   const originalChallenge = result ? result.challenge : null;
 
   if (!originalChallenge) {
@@ -88,6 +86,7 @@ auth.post("/verify", async (c) => {
           status: Status.SUCCESS,
           access_token: accessToken,
           refresh_token: refreshToken,
+          address: eth_address,
         });
       } else {
         return c.json(
@@ -143,6 +142,7 @@ auth.post("/refresh-token", async (c) => {
   return c.json({
     status: Status.SUCCESS,
     refresh_token,
+    address: tokenRecord.user.eth_address,
     access_token: newAccessToken,
   });
 });
