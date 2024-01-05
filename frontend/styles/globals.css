@@ -135,6 +135,7 @@ table {
   --border-radius: 3px; /* Rounded corners */
   --border-width: 1px; /* Thin borders */
   --border-radius-circle: 100%;
+  --error-color: #ef4444;
 }
 
 /* Global styles */
@@ -190,6 +191,8 @@ header div {
 }
 
 .header__logo {
+  height: 20px;
+  width: 20px;
   margin-right: 10px;
   border-radius: 9999px;
 }
@@ -212,8 +215,8 @@ nav a {
   }
 
   .header__logo {
-    height: 40px;
-    width: 40px;
+    height: 20px;
+    width: 20px;
   }
 
   .header__company {
@@ -493,6 +496,10 @@ footer {
   border-radius: var(--border-radius);
   margin: 1rem 0;
   padding: 1rem;
+}
+
+.welcome__item-error {
+  color: var(--error-color);
 }
 
 .welcome__description p {
